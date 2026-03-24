@@ -357,7 +357,7 @@
       animateVisualizer();
 
       // MediaRecorder
-      const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4';
+      const mimeType = MediaRecorder.isTypeSupported('audio/mp4') ? 'audio/mp4' : 'audio/webm';
       mediaRecorder = new MediaRecorder(stream, { mimeType });
       audioChunks = [];
       mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunks.push(e.data); };
