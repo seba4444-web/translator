@@ -43,6 +43,9 @@
     .badge-pl { background: rgba(79,123,255,0.15); color: var(--pl); border: 1px solid rgba(79,123,255,0.3); }
     .badge-es { background: rgba(255,107,79,0.15); color: var(--es); border: 1px solid rgba(255,107,79,0.3); }
     .badge-flag { font-size: 1.3rem; padding: 2px 4px; }
+    .bull-icon { color: #cc0000; width: 48px; height: 38px; flex-shrink: 0; }
+    .bull-icon svg { width: 100%; height: 100%; }
+    body.light .bull-icon { color: #1a1a1a; }
     .tabs { display: flex; background: var(--surface); border-bottom: 1px solid var(--border); flex-shrink: 0; }
     .tab { flex: 1; padding: 12px 8px; text-align: center; font-size: 0.75rem; font-weight: 500; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; }
     .tab.active { color: var(--text); border-bottom-color: var(--pl); }
@@ -51,6 +54,10 @@
     .page { display: none; flex: 1; flex-direction: column; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 16px; gap: 12px; min-height: 0; }
     .page.active { display: flex; }
     .panels { display: flex; flex-direction: column; gap: 10px; }
+    .mode-selector { display: flex; gap: 8px; margin-bottom: 4px; }
+    .mode-btn { flex: 1; padding: 10px; border-radius: 100px; border: 1.5px solid var(--border); background: var(--surface2); color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 0.82rem; font-weight: 500; cursor: pointer; transition: all 0.2s; text-align: center; }
+    .mode-btn.active-pl { border-color: var(--pl); color: var(--pl); background: rgba(79,123,255,0.1); }
+    .mode-btn.active-es { border-color: var(--es); color: var(--es); background: rgba(255,107,79,0.1); }
     .panel { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; transition: all 0.3s ease; }
     .panel.active-pl { border-color: var(--pl); box-shadow: 0 0 20px var(--pl-glow); }
     .panel.active-es { border-color: var(--es); box-shadow: 0 0 20px var(--es-glow); }
@@ -177,7 +184,6 @@
 
 <div class="header">
   <div class="logo"><div class="logo-dot"></div>Traductor</div>
-  <div class="lang-badges"><span class="badge-flag">🇵🇱</span><span class="badge-flag">🇪🇸</span></div>
 </div>
 
 <div class="tabs">
@@ -188,18 +194,22 @@
 
 <!-- TRANSLATOR -->
 <div class="page active" id="pageTranslator">
+  <div class="mode-selector">
+    <button class="mode-btn active-pl" id="modePl" onclick="setMode('pl')">🇵🇱 Polski ↔ 🇪🇸 Español</button>
+    <button class="mode-btn" id="modeEn" onclick="setMode('en')">🇬🇧 English ↔ 🇪🇸 Español</button>
+  </div>
   <div class="panels">
     <div class="panel" id="panelPl">
       <div class="panel-header">
-        <div class="panel-flag">🇵🇱</div>
-        <div class="panel-info"><div class="panel-lang">POLSKI</div><div class="panel-role">Mówi po polsku → tłumaczenie na ES</div></div>
+        <div class="panel-flag" id="flagA">🇵🇱</div>
+        <div class="panel-info"><div class="panel-lang" id="langNameA">POLSKI</div><div class="panel-role" id="langRoleA">Mówi po polsku → tłumaczenie na ES</div></div>
         <div class="panel-status status-idle" id="statusPl">gotowy</div>
       </div>
       <div class="panel-body">
         <div class="transcript-area"><div class="transcript-label">Rozpoznany tekst</div><div class="transcript-text empty" id="transcriptPl">Wciśnij przycisk i mów...</div></div>
         <div class="translation-area">
           <div class="translation-label-row">
-            <div class="translation-label label-es">Tłumaczenie na ES</div>
+            <div class="translation-label label-es" id="transLabelA">Tłumaczenie na ES</div>
             <div class="translation-actions">
               <button class="btn-copy" id="copyBtnPl" onclick="copyTranslation('pl')" title="Kopiuj">📋</button>
               <button class="btn-speak" id="speakBtnPl" onclick="speakTranslation('pl')" title="Odtwórz">🔊</button>
@@ -211,15 +221,15 @@
     </div>
     <div class="panel" id="panelEs">
       <div class="panel-header">
-        <div class="panel-flag">🇪🇸</div>
-        <div class="panel-info"><div class="panel-lang">ESPAÑOL</div><div class="panel-role">Habla en español → traducción al PL</div></div>
+        <div class="panel-flag" id="flagB">🇪🇸</div>
+        <div class="panel-info"><div class="panel-lang" id="langNameB">ESPAÑOL</div><div class="panel-role" id="langRoleB">Habla en español → traducción al PL</div></div>
         <div class="panel-status status-idle" id="statusEs">listo</div>
       </div>
       <div class="panel-body">
         <div class="transcript-area"><div class="transcript-label">Texto reconocido</div><div class="transcript-text empty" id="transcriptEs">Pulsa el botón y habla...</div></div>
         <div class="translation-area">
           <div class="translation-label-row">
-            <div class="translation-label label-pl">Tłumaczenie na PL</div>
+            <div class="translation-label label-pl" id="transLabelB">Tłumaczenie na PL</div>
             <div class="translation-actions">
               <button class="btn-copy" id="copyBtnEs" onclick="copyTranslation('es')" title="Kopiuj">📋</button>
               <button class="btn-speak" id="speakBtnEs" onclick="speakTranslation('es')" title="Odtwórz">🔊</button>
@@ -505,10 +515,12 @@
     const el = document.getElementById('translation' + (sourceLang === 'pl' ? 'Pl' : 'Es'));
     const text = el.textContent;
     if (!text || el.classList.contains('empty')) { showToast('Brak tekstu do odtworzenia', 'error'); return; }
-    const speakLang = sourceLang === 'pl' ? 'es-ES' : 'pl-PL';
+    const m = MODES[currentMode];
+    // speak the translation = target lang of the OTHER panel
+    const speakLangCode = sourceLang === 'pl' ? m.b.speech : m.a.speech;
     const voiceName = sourceLang === 'pl' ? voiceEs : voicePl;
     const btnId = 'speakBtn' + (sourceLang === 'pl' ? 'Pl' : 'Es');
-    speakText(text, speakLang, voiceName, btnId);
+    speakText(text, speakLangCode, voiceName, btnId);
   }
 
   // ── SETUP ─────────────────────────────────────────────────
@@ -530,6 +542,41 @@
     if (tab === 'settings') { setTimeout(loadVoices, 300); loadUsage(); }
   }
 
+  let currentMode = 'pl'; // 'pl' = PL↔ES, 'en' = EN↔ES
+
+  // tryb: langA = pl/en, langB = es zawsze
+  const MODES = {
+    pl: {
+      a: { code: 'pl', speech: 'pl-PL', flag: '🇵🇱', name: 'POLSKI', role: 'Mówi po polsku → tłumaczenie na ES', btn: 'Mówię po PL', status: 'gotowy', target: 'ES', transLabel: 'Tłumaczenie na ES' },
+      b: { code: 'es', speech: 'es-ES', flag: '🇪🇸', name: 'ESPAÑOL', role: 'Habla en español → traducción al PL', btn: 'Hablo en ES', status: 'listo', target: 'PL', transLabel: 'Tłumaczenie na PL' }
+    },
+    en: {
+      a: { code: 'en', speech: 'en-US', flag: '🇬🇧', name: 'ENGLISH', role: 'Speak in English → translation to ES', btn: 'I speak EN', status: 'ready', target: 'ES', transLabel: 'Translation to ES' },
+      b: { code: 'es', speech: 'es-ES', flag: '🇪🇸', name: 'ESPAÑOL', role: 'Habla en español → traducción al EN', btn: 'Hablo en ES', status: 'listo', target: 'EN', transLabel: 'Traducción al EN' }
+    }
+  };
+
+  function setMode(mode) {
+    stopRecording();
+    clearAll();
+    currentMode = mode;
+    document.getElementById('modePl').className = 'mode-btn' + (mode === 'pl' ? ' active-pl' : '');
+    document.getElementById('modeEn').className = 'mode-btn' + (mode === 'en' ? ' active-es' : '');
+    const m = MODES[mode];
+    document.getElementById('flagA').textContent = m.a.flag;
+    document.getElementById('langNameA').textContent = m.a.name;
+    document.getElementById('langRoleA').textContent = m.a.role;
+    document.getElementById('flagB').textContent = m.b.flag;
+    document.getElementById('langNameB').textContent = m.b.name;
+    document.getElementById('langRoleB').textContent = m.b.role;
+    document.getElementById('btnPlText').textContent = m.a.btn;
+    document.getElementById('btnEsText').textContent = m.b.btn;
+    document.getElementById('transLabelA').textContent = m.a.transLabel;
+    document.getElementById('transLabelB').textContent = m.b.transLabel;
+    document.getElementById('transcriptPl').textContent = mode === 'pl' ? 'Wciśnij przycisk i mów...' : 'Press button and speak...';
+    document.getElementById('transcriptEs').textContent = 'Pulsa el botón y habla...';
+  }
+
   // ── TRANSLATOR ────────────────────────────────────────────
   function toggleRecording(lang) {
     if (isRecording && activeLang === lang) stopRecording();
@@ -540,7 +587,8 @@
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) { showToast('Rozpoznawanie mowy niedostępne', 'error'); return; }
     recognition = new SR();
-    recognition.lang = lang === 'pl' ? 'pl-PL' : 'es-ES';
+    const m = MODES[currentMode];
+    recognition.lang = lang === 'pl' ? m.a.speech : m.b.speech;
     recognition.continuous = true;
     recognition.interimResults = true;
     isRecording = true; activeLang = lang;
@@ -567,32 +615,38 @@
 
   async function translate(sourceLang, text) {
     if (!text.trim()) return;
-    const targetLang = sourceLang === 'pl' ? 'ES' : 'PL';
+    const m = MODES[currentMode];
+    const targetLang = sourceLang === 'pl' ? m.a.target : m.b.target;
     setStatus(sourceLang, 'processing', 'tłumaczę...');
     try {
+      const srcCode = sourceLang === 'pl' ? m.a.code.toUpperCase() : m.b.code.toUpperCase();
       const res = await fetch('/.netlify/functions/translate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, source_lang: sourceLang.toUpperCase(), target_lang: targetLang, apiKey: DEEPL_API_KEY })
+        body: JSON.stringify({ text, source_lang: srcCode, target_lang: targetLang, apiKey: DEEPL_API_KEY })
       });
       if (!res.ok) throw new Error('Błąd serwera: ' + res.status);
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setTranslation(sourceLang, data.translations[0].text);
-      setStatus(sourceLang, 'idle', sourceLang === 'pl' ? 'gotowy' : 'listo');
+      const idleStatus = sourceLang === 'pl' ? m.a.status : m.b.status;
+      setStatus(sourceLang, 'idle', idleStatus);
       if (handsfreeEnabled) speakTranslation(sourceLang);
     } catch (err) {
       showToast('Błąd: ' + err.message, 'error');
-      setStatus(sourceLang, 'idle', sourceLang === 'pl' ? 'gotowy' : 'listo');
+      const idleStatus = sourceLang === 'pl' ? m.a.status : m.b.status;
+      setStatus(sourceLang, 'idle', idleStatus);
     }
   }
 
   function setRecordingUI(lang, rec) {
     const s = lang === 'pl' ? 'Pl' : 'Es';
+    const m = MODES[currentMode];
+    const cfg = lang === 'pl' ? m.a : m.b;
     document.getElementById('btn' + s).classList.toggle('recording', rec);
-    document.getElementById('btn' + s + 'Text').textContent = rec ? 'Nagrywam...' : (lang === 'pl' ? 'Mówię po PL' : 'Hablo en ES');
+    document.getElementById('btn' + s + 'Text').textContent = rec ? 'Nagrywam...' : cfg.btn;
     document.getElementById('panel' + s).classList.toggle('active-' + lang, rec);
-    setStatus(lang, rec ? 'listening' : 'idle', rec ? (lang === 'pl' ? 'słucham...' : 'escuchando...') : (lang === 'pl' ? 'gotowy' : 'listo'));
+    setStatus(lang, rec ? 'listening' : 'idle', rec ? (lang === 'pl' ? 'słucham...' : 'escuchando...') : cfg.status);
   }
 
   function setStatus(lang, type, text) {
