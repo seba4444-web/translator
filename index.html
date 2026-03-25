@@ -101,7 +101,7 @@
     .btn-rec-main.recording { background: linear-gradient(135deg, rgba(255,79,123,0.6), rgba(255,79,123,0.4)); border-color: var(--rec); box-shadow: 0 0 30px var(--rec-glow); animation: recPulse 1.5s infinite; }
     @keyframes recPulse { 0%, 100% { box-shadow: 0 0 20px var(--rec-glow); } 50% { box-shadow: 0 0 40px var(--rec-glow), 0 0 60px var(--rec-glow); } }
     .rec-hint { font-size: 0.8rem; color: var(--muted); text-align: center; }
-    .rec-live-transcript { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 14px 16px; min-height: 60px; font-size: 0.9rem; line-height: 1.6; color: var(--text); font-weight: 300; }
+    .rec-live-transcript { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 14px 16px; min-height: 60px; max-height: 200px; overflow-y: auto; font-size: 0.9rem; line-height: 1.6; color: var(--text); font-weight: 300; scroll-behavior: smooth; }
     .rec-live-transcript.empty { color: var(--muted); font-style: italic; font-size: 0.85rem; }
     .rec-live-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 6px; }
     .recordings-section { display: flex; flex-direction: column; gap: 10px; }
@@ -573,6 +573,7 @@
       }
       const el = document.getElementById('recLiveTranscript');
       el.textContent = liveTranscript + (interim ? '... ' + interim : '');
+      el.scrollTop = el.scrollHeight;
     };
     recSpeechRecognition.onerror = (e) => { if (e.error !== 'no-speech') console.log('SR:', e.error); };
     recSpeechRecognition.onend = () => { if (mediaRecorder && mediaRecorder.state === 'recording') recSpeechRecognition.start(); };
