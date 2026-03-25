@@ -27,6 +27,11 @@
     .theme-toggle { display: flex; gap: 8px; }
     .theme-btn { flex: 1; padding: 14px; border-radius: 14px; border: 2px solid var(--border); background: var(--surface2); cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 500; color: var(--muted); transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
     .theme-btn.active { border-color: var(--pl); color: var(--pl); background: rgba(79,123,255,0.08); }
+    .font-size-row { display: flex; align-items: center; gap: 12px; }
+    .font-size-label { font-size: 0.85rem; color: var(--muted); white-space: nowrap; }
+    .font-size-slider { flex: 1; -webkit-appearance: none; appearance: none; height: 4px; border-radius: 4px; background: var(--border); outline: none; cursor: pointer; }
+    .font-size-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%; background: var(--pl); cursor: pointer; box-shadow: 0 0 6px var(--pl-glow); }
+    .font-size-preview { font-size: 0.85rem; color: var(--pl); font-weight: 600; min-width: 36px; text-align: right; }
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
     .header { padding: 20px 24px 12px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); background: var(--surface); flex-shrink: 0; }
@@ -66,6 +71,26 @@
     .transcript-text.empty { color: var(--muted); font-style: italic; font-size: 0.85rem; }
     .translation-area { border-top: 1px solid var(--border); padding-top: 10px; min-height: 36px; }
     .translation-label-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+    .translation-actions { display: flex; align-items: center; gap: 4px; }
+    .btn-copy { background: none; border: none; cursor: pointer; font-size: 1.1rem; padding: 2px 4px; border-radius: 6px; opacity: 0.5; transition: all 0.15s; }
+    .btn-copy:hover { opacity: 1; transform: scale(1.15); }
+    .btn-copy.copied { opacity: 1; }
+    /* HANDS-FREE */
+    .handsfree-row { display: flex; align-items: center; justify-content: space-between; background: var(--surface2); border: 1px solid var(--border); border-radius: 14px; padding: 12px 16px; }
+    .handsfree-label { font-size: 0.85rem; font-weight: 500; display: flex; align-items: center; gap: 8px; }
+    .handsfree-sub { font-size: 0.7rem; color: var(--muted); margin-top: 2px; }
+    .toggle-switch { position: relative; width: 44px; height: 26px; flex-shrink: 0; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider { position: absolute; inset: 0; background: var(--border); border-radius: 26px; cursor: pointer; transition: 0.2s; }
+    .toggle-slider:before { content: ''; position: absolute; height: 20px; width: 20px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.2s; }
+    input:checked + .toggle-slider { background: var(--pl); }
+    input:checked + .toggle-slider:before { transform: translateX(18px); }
+    /* USAGE COUNTER */
+    .usage-bar-wrap { background: var(--surface2); border-radius: 100px; height: 6px; overflow: hidden; margin-top: 8px; }
+    .usage-bar { height: 6px; border-radius: 100px; background: var(--pl); transition: width 0.4s ease; }
+    .usage-bar.warn { background: #ffc84f; }
+    .usage-bar.danger { background: var(--rec); }
+    .usage-text { font-size: 0.75rem; color: var(--muted); margin-top: 6px; display: flex; justify-content: space-between; }
     .translation-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; }
     .label-pl { color: var(--pl); } .label-es { color: var(--es); }
     .btn-speak { background: none; border: none; cursor: pointer; font-size: 1.5rem; padding: 2px 6px; border-radius: 8px; transition: transform 0.15s; opacity: 0.6; }
@@ -175,7 +200,10 @@
         <div class="translation-area">
           <div class="translation-label-row">
             <div class="translation-label label-es">Tłumaczenie na ES</div>
-            <button class="btn-speak" id="speakBtnPl" onclick="speakTranslation('pl')" title="Odtwórz">🔊</button>
+            <div class="translation-actions">
+              <button class="btn-copy" id="copyBtnPl" onclick="copyTranslation('pl')" title="Kopiuj">📋</button>
+              <button class="btn-speak" id="speakBtnPl" onclick="speakTranslation('pl')" title="Odtwórz">🔊</button>
+            </div>
           </div>
           <div class="translation-text es-text empty" id="translationPl">Tutaj pojawi się tłumaczenie</div>
         </div>
@@ -192,7 +220,10 @@
         <div class="translation-area">
           <div class="translation-label-row">
             <div class="translation-label label-pl">Tłumaczenie na PL</div>
-            <button class="btn-speak" id="speakBtnEs" onclick="speakTranslation('es')" title="Odtwórz">🔊</button>
+            <div class="translation-actions">
+              <button class="btn-copy" id="copyBtnEs" onclick="copyTranslation('es')" title="Kopiuj">📋</button>
+              <button class="btn-speak" id="speakBtnEs" onclick="speakTranslation('es')" title="Odtwórz">🔊</button>
+            </div>
           </div>
           <div class="translation-text pl-text empty" id="translationEs">Tutaj pojawi się tłumaczenie</div>
         </div>
@@ -200,6 +231,16 @@
     </div>
   </div>
   <div class="controls">
+    <div class="handsfree-row">
+      <div>
+        <div class="handsfree-label">🎧 Tryb hands-free</div>
+        <div class="handsfree-sub">Tłumaczenie odczytywane automatycznie</div>
+      </div>
+      <label class="toggle-switch">
+        <input type="checkbox" id="handsfreeToggle" onchange="toggleHandsfree()" />
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
     <div class="btn-row">
       <button class="btn btn-pl" id="btnPl" onclick="toggleRecording('pl')"><span class="btn-icon">🎙️</span><span id="btnPlText">Mówię po PL</span></button>
       <button class="btn btn-es" id="btnEs" onclick="toggleRecording('es')"><span class="btn-icon">🎙️</span><span id="btnEsText">Hablo en ES</span></button>
@@ -240,7 +281,23 @@
     </div>
   </div>
   <div class="settings-section">
-    <div class="settings-section-title">🔊 Lektor — Polski</div>
+    <div class="settings-section-title">🔤 Rozmiar czcionki</div>
+    <div class="font-size-row">
+      <span class="font-size-label">A</span>
+      <input class="font-size-slider" type="range" min="12" max="22" step="1" id="fontSizeSlider" oninput="setFontSize(this.value)" />
+      <span class="font-size-label" style="font-size:1.1rem">A</span>
+      <span class="font-size-preview" id="fontSizePreview">16px</span>
+    </div>
+  </div>
+  <div class="settings-section">
+    <div class="settings-section-title">📊 Użycie DeepL</div>
+    <div id="usageLoading" style="font-size:0.8rem;color:var(--muted)">Ładowanie...</div>
+    <div id="usageContent" style="display:none">
+      <div class="usage-bar-wrap"><div class="usage-bar" id="usageBar" style="width:0%"></div></div>
+      <div class="usage-text"><span id="usageUsed">0</span><span id="usageLimit">/ 500 000 znaków</span></div>
+    </div>
+    <button class="voice-refresh-btn" style="margin-top:8px" onclick="loadUsage()">🔄 Odśwież</button>
+  </div>
     <div class="voice-setting">
       <div class="voice-label">🇵🇱 Głos dla języka polskiego</div>
       <select class="voice-select" id="voiceSelectPl" onchange="saveVoice('pl')">
@@ -282,6 +339,7 @@
   let allVoices = [];
 
   let currentTheme = localStorage.getItem('theme') || 'dark';
+  let currentFontSize = parseInt(localStorage.getItem('fontSize') || '16');
 
   function init() {
     if (DEEPL_API_KEY) document.getElementById('setupOverlay').classList.add('hidden');
@@ -290,6 +348,7 @@
     loadVoices();
     window.speechSynthesis.onvoiceschanged = loadVoices;
     applyTheme(currentTheme);
+    applyFontSize(currentFontSize);
   }
 
   function setTheme(theme) {
@@ -304,7 +363,70 @@
     document.getElementById('themeLight').classList.toggle('active', theme === 'light');
   }
 
-  // ── VOICES ────────────────────────────────────────────────
+  function setFontSize(size) {
+    currentFontSize = parseInt(size);
+    localStorage.setItem('fontSize', size);
+    applyFontSize(currentFontSize);
+  }
+
+  function applyFontSize(size) {
+    document.documentElement.style.setProperty('--font-size-base', size + 'px');
+    const slider = document.getElementById('fontSizeSlider');
+    const preview = document.getElementById('fontSizePreview');
+    if (slider) slider.value = size;
+    if (preview) preview.textContent = size + 'px';
+    // Apply to key text elements
+    document.querySelectorAll('.transcript-text, .translation-text, .rec-live-transcript').forEach(el => {
+      el.style.fontSize = size + 'px';
+    });
+  }
+
+  let handsfreeEnabled = false;
+
+  function toggleHandsfree() {
+    handsfreeEnabled = document.getElementById('handsfreeToggle').checked;
+    showToast(handsfreeEnabled ? '🎧 Hands-free włączony' : 'Hands-free wyłączony', 'success');
+  }
+
+  function copyTranslation(sourceLang) {
+    const el = document.getElementById('translation' + (sourceLang === 'pl' ? 'Pl' : 'Es'));
+    const text = el.textContent;
+    if (!text || el.classList.contains('empty')) { showToast('Brak tekstu do skopiowania', 'error'); return; }
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('copyBtn' + (sourceLang === 'pl' ? 'Pl' : 'Es'));
+      btn.textContent = '✅';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = '📋'; btn.classList.remove('copied'); }, 2000);
+      showToast('Skopiowano!', 'success');
+    }).catch(() => showToast('Błąd kopiowania', 'error'));
+  }
+
+  async function loadUsage() {
+    if (!DEEPL_API_KEY) return;
+    document.getElementById('usageLoading').style.display = 'block';
+    document.getElementById('usageContent').style.display = 'none';
+    try {
+      const res = await fetch('/.netlify/functions/usage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ apiKey: DEEPL_API_KEY })
+      });
+      const data = await res.json();
+      if (data.character_count !== undefined) {
+        const used = data.character_count;
+        const limit = data.character_limit;
+        const pct = Math.min(100, (used / limit) * 100);
+        document.getElementById('usageBar').style.width = pct + '%';
+        document.getElementById('usageBar').className = 'usage-bar' + (pct > 90 ? ' danger' : pct > 70 ? ' warn' : '');
+        document.getElementById('usageUsed').textContent = used.toLocaleString('pl') + ' znaków';
+        document.getElementById('usageLimit').textContent = '/ ' + limit.toLocaleString('pl');
+        document.getElementById('usageLoading').style.display = 'none';
+        document.getElementById('usageContent').style.display = 'block';
+      }
+    } catch (e) {
+      document.getElementById('usageLoading').textContent = 'Błąd ładowania';
+    }
+  }
   function loadVoices() {
     allVoices = window.speechSynthesis.getVoices();
     populateVoiceSelect('pl', 'pl-PL', 'voiceSelectPl');
@@ -403,7 +525,7 @@
     const name = tab.charAt(0).toUpperCase() + tab.slice(1);
     document.getElementById('tab' + name).classList.add('active');
     document.getElementById('page' + name).classList.add('active');
-    if (tab === 'settings') setTimeout(loadVoices, 300);
+    if (tab === 'settings') { setTimeout(loadVoices, 300); loadUsage(); }
   }
 
   // ── TRANSLATOR ────────────────────────────────────────────
@@ -456,6 +578,7 @@
       if (data.error) throw new Error(data.error);
       setTranslation(sourceLang, data.translations[0].text);
       setStatus(sourceLang, 'idle', sourceLang === 'pl' ? 'gotowy' : 'listo');
+      if (handsfreeEnabled) speakTranslation(sourceLang);
     } catch (err) {
       showToast('Błąd: ' + err.message, 'error');
       setStatus(sourceLang, 'idle', sourceLang === 'pl' ? 'gotowy' : 'listo');
