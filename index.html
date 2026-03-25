@@ -15,8 +15,18 @@
       --pl: #4f7bff; --pl-glow: rgba(79,123,255,0.3);
       --es: #ff6b4f; --es-glow: rgba(255,107,79,0.3);
       --rec: #ff4f7b; --rec-glow: rgba(255,79,123,0.3);
-      --text: #f0f0f8; --muted: #6b6b88; --success: #4fffb0; --radius: 20px;
+      --text: #f0f0f8; --muted: #9898b0; --success: #4fffb0; --radius: 20px;
     }
+    body.light {
+      --bg: #f5f5f7; --surface: #ffffff; --surface2: #e8e8ed; --border: #d1d1d6;
+      --pl: #2c5cf5; --pl-glow: rgba(44,92,245,0.2);
+      --es: #e8440a; --es-glow: rgba(232,68,10,0.2);
+      --rec: #e8004a; --rec-glow: rgba(232,0,74,0.2);
+      --text: #1c1c1e; --muted: #6e6e73; --success: #30a46c;
+    }
+    .theme-toggle { display: flex; gap: 8px; }
+    .theme-btn { flex: 1; padding: 14px; border-radius: 14px; border: 2px solid var(--border); background: var(--surface2); cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 500; color: var(--muted); transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .theme-btn.active { border-color: var(--pl); color: var(--pl); background: rgba(79,123,255,0.08); }
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
     .header { padding: 20px 24px 12px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); background: var(--surface); flex-shrink: 0; }
@@ -223,6 +233,13 @@
 <!-- USTAWIENIA -->
 <div class="page" id="pageSettings">
   <div class="settings-section">
+    <div class="settings-section-title">🎨 Motyw</div>
+    <div class="theme-toggle">
+      <button class="theme-btn active" id="themeDark" onclick="setTheme('dark')">🌙 Ciemny</button>
+      <button class="theme-btn" id="themeLight" onclick="setTheme('light')">☀️ Jasny</button>
+    </div>
+  </div>
+  <div class="settings-section">
     <div class="settings-section-title">🔊 Lektor — Polski</div>
     <div class="voice-setting">
       <div class="voice-label">🇵🇱 Głos dla języka polskiego</div>
@@ -264,12 +281,27 @@
   let voiceEs = localStorage.getItem('voice_es') || '';
   let allVoices = [];
 
+  let currentTheme = localStorage.getItem('theme') || 'dark';
+
   function init() {
     if (DEEPL_API_KEY) document.getElementById('setupOverlay').classList.add('hidden');
     buildVisualizer();
     renderRecordings();
     loadVoices();
     window.speechSynthesis.onvoiceschanged = loadVoices;
+    applyTheme(currentTheme);
+  }
+
+  function setTheme(theme) {
+    currentTheme = theme;
+    localStorage.setItem('theme', theme);
+    applyTheme(theme);
+  }
+
+  function applyTheme(theme) {
+    document.body.classList.toggle('light', theme === 'light');
+    document.getElementById('themeDark').classList.toggle('active', theme === 'dark');
+    document.getElementById('themeLight').classList.toggle('active', theme === 'light');
   }
 
   // ── VOICES ────────────────────────────────────────────────
