@@ -616,28 +616,54 @@
   async function translate(sourceLang, text) {
     if (!text.trim()) return;
     const m = MODES[currentMode];
-    const targetLang = sourceLang === 'pl' ? m.a.target : m.b.target;
+    const isLangA = sourceLang === 'pl';
+    const srcCfg = isLangA ? m.a : m.b;
+    const targetLang = isLangA ? m.a.target : m.b.target;
     setStatus(sourceLang, 'processing', 'tłumaczę...');
     try {
-      const srcCode = sourceLang === 'pl' ? m.a.code.toUpperCase() : m.b.code.toUpperCase();
+      const body = { text, target_lang: targetLang, apiKey: DEEPL_API_KEY };
+      if (srcCfg.code !== 'en') body.source_lang = srcCfg.code.toUpperCase();
       const res = await fetch('/.netlify/functions/translate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, source_lang: srcCode, target_lang: targetLang, apiKey: DEEPL_API_KEY })
+        body: JSON.stringify(body)
       });
       if (!res.ok) throw new Error('Błąd serwera: ' + res.status);
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setTranslation(sourceLang, data.translations[0].text);
-      const idleStatus = sourceLang === 'pl' ? m.a.status : m.b.status;
+      const idleStatus = isLangA ? m.a.status : m.b.status;
       setStatus(sourceLang, 'idle', idleStatus);
       if (handsfreeEnabled) speakTranslation(sourceLang);
     } catch (err) {
       showToast('Błąd: ' + err.message, 'error');
-      const idleStatus = sourceLang === 'pl' ? m.a.status : m.b.status;
+      const idleStatus = isLangA ? m.a.status : m.b.status;
       setStatus(sourceLang, 'idle', idleStatus);
     }
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   function setRecordingUI(lang, rec) {
     const s = lang === 'pl' ? 'Pl' : 'Es';
