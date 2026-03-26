@@ -6,13 +6,16 @@ exports.handler = async function(event) {
   try {
     const { text, source_lang, target_lang, apiKey } = JSON.parse(event.body);
 
+    const body = { text: [text], target_lang };
+    if (source_lang) body.source_lang = source_lang;
+
     const response = await fetch('https://api-free.deepl.com/v2/translate', {
       method: 'POST',
       headers: {
         'Authorization': 'DeepL-Auth-Key ' + apiKey,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ text: [text], source_lang, target_lang })
+      body: JSON.stringify(body)
     });
 
     const data = await response.json();
