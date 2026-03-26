@@ -867,22 +867,31 @@
     const url = URL.createObjectURL(blob);
     const now = new Date();
     const name = 'Nagranie ' + now.toLocaleDateString('pl') + ' ' + now.toLocaleTimeString('pl', { hour: '2-digit', minute: '2-digit' });
+
+    // Poczekaj chwilę żeby speech recognition zdążył zapisać ostatnie słowa
+    await new Promise(r => setTimeout(r, 800));
+
     const transcript = liveTranscript.trim();
     const langLabel = recLang === 'pl' ? 'PL' : 'ES';
     let translation = '';
+
     if (transcript) {
       showToast('Tłumaczę transkrypcję...', '');
       try {
         const targetLang = recLang === 'pl' ? 'ES' : 'PL';
+        // Nie podajemy source_lang dla PL — DeepL auto-detect działa lepiej
+        const body = { text: transcript, target_lang: targetLang, apiKey: DEEPL_API_KEY };
+        if (recLang !== 'pl') body.source_lang = recLang.toUpperCase();
         const res = await fetch('/.netlify/functions/translate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: transcript, source_lang: recLang.toUpperCase(), target_lang: targetLang, apiKey: DEEPL_API_KEY })
+          body: JSON.stringify(body)
         });
         const data = await res.json();
         if (data.translations) translation = data.translations[0].text;
       } catch (e) { console.log('Translation error:', e); }
     }
+
     recordings.unshift({ id: Date.now(), name, duration: formatTime(recSeconds), url, ext, transcript, translation, langLabel });
     renderRecordings();
     showToast('Nagranie zapisane', 'success');
