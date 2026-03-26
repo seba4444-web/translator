@@ -244,7 +244,7 @@
     <div class="handsfree-row">
       <div>
         <div class="handsfree-label">🎧 Tryb hands-free</div>
-        <div class="handsfree-sub">Tłumaczenie odczytywane automatycznie</div>
+        <div class="handsfree-sub">Zatrzymuje mikrofon i odczytuje tłumaczenie</div>
       </div>
       <label class="toggle-switch">
         <input type="checkbox" id="handsfreeToggle" onchange="toggleHandsfree()" />
@@ -394,10 +394,56 @@
   }
 
   let handsfreeEnabled = false;
+  let handsfreeQueue = null;
 
   function toggleHandsfree() {
     handsfreeEnabled = document.getElementById('handsfreeToggle').checked;
     showToast(handsfreeEnabled ? '🎧 Hands-free włączony' : 'Hands-free wyłączony', 'success');
+  }
+
+  function speakHandsfree(sourceLang) {
+    if (!handsfreeEnabled) return;
+    const el = document.getElementById('translation' + (sourceLang === 'pl' ? 'Pl' : 'Es'));
+    const text = el.textContent;
+    if (!text || el.classList.contains('empty')) return;
+
+    const m = MODES[currentMode];
+    const isLangA = sourceLang === 'pl';
+    const speakLangCode = isLangA ? m.b.speech : m.a.speech;
+    const voiceName = isLangA ? voiceEs : voicePl;
+    const btnId = 'speakBtn' + (isLangA ? 'Pl' : 'Es');
+
+    // Zatrzymaj nagrywanie
+    const wasRecording = isRecording;
+    const wasLang = activeLang;
+    if (wasRecording) {
+      recognition.onend = null;
+      recognition.stop();
+    }
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = speakLangCode;
+    utterance.rate = 0.95;
+    const voice = getVoice(speakLangCode, voiceName);
+    if (voice) utterance.voice = voice;
+
+    utterance.onstart = () => {
+      currentUtterance = utterance;
+      document.getElementById(btnId).classList.add('speaking');
+    };
+
+    utterance.onend = utterance.onerror = () => {
+      currentUtterance = null;
+      document.getElementById(btnId).classList.remove('speaking');
+      // Wznów nagrywanie po odtworzeniu
+      if (wasRecording && wasLang) {
+        setTimeout(() => {
+          if (handsfreeEnabled) startRecording(wasLang);
+        }, 300);
+      }
+    };
+
+    window.speechSynthesis.speak(utterance);
   }
 
   function copyTranslation(sourceLang) {
@@ -634,7 +680,7 @@
       setTranslation(sourceLang, data.translations[0].text);
       const idleStatus = isLangA ? m.a.status : m.b.status;
       setStatus(sourceLang, 'idle', idleStatus);
-      if (handsfreeEnabled) speakTranslation(sourceLang);
+      if (handsfreeEnabled) speakHandsfree(sourceLang);
     } catch (err) {
       showToast('Błąd: ' + err.message, 'error');
       const idleStatus = isLangA ? m.a.status : m.b.status;
